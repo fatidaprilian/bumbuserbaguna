@@ -1,0 +1,224 @@
+openapi: 3.1.0
+info:
+	title: Bumbuserbaguna API
+	version: 0.1.0
+	description: Multi-tool academic productivity API for plagiarism checks, structure validation, and presentation generation.
+servers:
+	- url: https://api.bumbuserbaguna.local
+paths:
+	/v1/documents:upload:
+		post:
+			summary: Upload a document and enqueue ingestion
+			operationId: uploadDocument
+			tags: [Document Ingestion]
+			requestBody:
+				required: true
+				content:
+					application/json:
+						schema:
+							$ref: '#/components/schemas/UploadDocumentRequest'
+			responses:
+				'202':
+					description: Accepted for asynchronous ingestion
+					content:
+						application/json:
+							schema:
+								$ref: '#/components/schemas/UploadDocumentResponse'
+				'400':
+					$ref: '#/components/responses/ValidationError'
+				'401':
+					$ref: '#/components/responses/UnauthorizedError'
+	/v1/tools/plagiarism:run:
+		post:
+			summary: Run plagiarism analysis for a document
+			operationId: runPlagiarismCheck
+			tags: [Plagiarism Analysis]
+			requestBody:
+				required: true
+				content:
+					application/json:
+						schema:
+							$ref: '#/components/schemas/RunPlagiarismRequest'
+			responses:
+				'200':
+					description: Plagiarism analysis completed
+					content:
+						application/json:
+							schema:
+								$ref: '#/components/schemas/RunPlagiarismResponse'
+				'400':
+					$ref: '#/components/responses/ValidationError'
+				'429':
+					$ref: '#/components/responses/RateLimitedError'
+	/v1/tools/report-structure:validate:
+		post:
+			summary: Validate report structure against template rules
+			operationId: validateReportStructure
+			tags: [Report Structuring]
+			requestBody:
+				required: true
+				content:
+					application/json:
+						schema:
+							$ref: '#/components/schemas/ValidateStructureRequest'
+			responses:
+				'200':
+					description: Structure validation completed
+					content:
+						application/json:
+							schema:
+								$ref: '#/components/schemas/ValidateStructureResponse'
+				'400':
+					$ref: '#/components/responses/ValidationError'
+	/v1/tools/presentation:generate:
+		post:
+			summary: Generate presentation draft from report content
+			operationId: generatePresentation
+			tags: [Presentation Generation]
+			requestBody:
+				required: true
+				content:
+					application/json:
+						schema:
+							$ref: '#/components/schemas/GeneratePresentationRequest'
+			responses:
+				'202':
+					description: Presentation generation queued
+					content:
+						application/json:
+							schema:
+								$ref: '#/components/schemas/GeneratePresentationResponse'
+				'400':
+					$ref: '#/components/responses/ValidationError'
+				'429':
+					$ref: '#/components/responses/RateLimitedError'
+components:
+	responses:
+		ValidationError:
+			description: Input validation failed
+			content:
+				application/json:
+					schema:
+						$ref: '#/components/schemas/ErrorEnvelope'
+		UnauthorizedError:
+			description: Authentication is required
+			content:
+				application/json:
+					schema:
+						$ref: '#/components/schemas/ErrorEnvelope'
+		RateLimitedError:
+			description: Too many requests
+			content:
+				application/json:
+					schema:
+						$ref: '#/components/schemas/ErrorEnvelope'
+	schemas:
+		UploadDocumentRequest:
+			type: object
+			required: [assignmentType, fileName, mimeType, fileSizeBytes]
+			properties:
+				assignmentType:
+					type: string
+					enum: [report, paper, presentation]
+				fileName:
+					type: string
+					minLength: 3
+				mimeType:
+					type: string
+				fileSizeBytes:
+					type: integer
+					minimum: 1
+		UploadDocumentResponse:
+			type: object
+			required: [documentId, documentVersionId, processingJobId]
+			properties:
+				documentId:
+					type: string
+				documentVersionId:
+					type: string
+				processingJobId:
+					type: string
+		RunPlagiarismRequest:
+			type: object
+			required: [documentId, analysisMode, languageScope]
+			properties:
+				documentId:
+					type: string
+				analysisMode:
+					type: string
+					enum: [basic, advanced]
+				languageScope:
+					type: string
+					enum: [id, id-en]
+		RunPlagiarismResponse:
+			type: object
+			required: [reportId, similarityScore, requiresManualReview]
+			properties:
+				reportId:
+					type: string
+				similarityScore:
+					type: number
+					minimum: 0
+					maximum: 100
+				requiresManualReview:
+					type: boolean
+		ValidateStructureRequest:
+			type: object
+			required: [documentId, templateType]
+			properties:
+				documentId:
+					type: string
+				templateType:
+					type: string
+					enum: [praktikum, makalah, proposal, skripsi]
+		ValidateStructureResponse:
+			type: object
+			required: [structureReportId, isStructureComplete, missingSections]
+			properties:
+				structureReportId:
+					type: string
+				isStructureComplete:
+					type: boolean
+				missingSections:
+					type: array
+					items:
+						type: string
+		GeneratePresentationRequest:
+			type: object
+			required: [documentId, targetSlideCount, audienceLevel]
+			properties:
+				documentId:
+					type: string
+				targetSlideCount:
+					type: integer
+					minimum: 8
+					maximum: 20
+				audienceLevel:
+					type: string
+					enum: [smp, sma-smk, university]
+		GeneratePresentationResponse:
+			type: object
+			required: [presentationId, jobStatus]
+			properties:
+				presentationId:
+					type: string
+				jobStatus:
+					type: string
+					enum: [queued, processing, completed]
+		ErrorEnvelope:
+			type: object
+			required: [success, traceId, error]
+			properties:
+				success:
+					type: boolean
+					enum: [false]
+				traceId:
+					type: string
+				error:
+					type: object
+					required: [code, message]
+					properties:
+						code:
+							type: string
+						message:
+							type: string

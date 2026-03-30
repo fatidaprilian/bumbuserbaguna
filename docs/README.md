@@ -10,6 +10,11 @@
 2. database/DATABASE_ARCHITECTURE.md
 3. security/SECURITY_BASELINE.md
 
+## Backend Scaffold
+1. ../backend/README.md
+2. ../backend/openapi/openapi.yaml
+3. ../backend/db/schema.sql
+
 ## AI Strategy
 1. ai/AI_STRATEGY.md
 
