@@ -1,0 +1,42 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Logs & temp
+*.log
+*.tmp
+*.cache
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Node / Python build artifacts
+node_modules/
+dist/
+build/
+coverage/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# AI assistant contexts and helper folders
+.agent-context/
+.agents/
+.gemini/
+.cursorrules
+.windsurfrules
+.agent-override.md
+
+# Copilot / chat session artifacts
+.github/copilot-instructions.md
+**/chat-session-resources/
+
+# Optional local AI helper configs
+.cursor/
+.claude/
+.openai/
