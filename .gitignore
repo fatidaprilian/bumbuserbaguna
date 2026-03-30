@@ -31,6 +31,8 @@ __pycache__/
 .cursorrules
 .windsurfrules
 .agent-override.md
+AGENTS.md
+mcp.json
 
 # Copilot / chat session artifacts
 .github/copilot-instructions.md
