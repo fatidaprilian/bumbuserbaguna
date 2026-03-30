@@ -97,6 +97,39 @@ CREATE TABLE structure_reports (
 
 CREATE INDEX structure_reports_document_id_idx ON structure_reports(document_id);
 
+CREATE TABLE report_template_sections (
+  report_template_section_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_type VARCHAR(50) NOT NULL,
+  section_code VARCHAR(80) NOT NULL,
+  section_title VARCHAR(200) NOT NULL,
+  section_order INTEGER NOT NULL,
+  is_mandatory BOOLEAN NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (template_type, section_code)
+);
+
+CREATE INDEX report_template_sections_template_type_idx ON report_template_sections(template_type);
+
+INSERT INTO report_template_sections (template_type, section_code, section_title, section_order, is_mandatory)
+VALUES
+  ('makalah', 'PENDAHULUAN', 'Pendahuluan', 1, TRUE),
+  ('makalah', 'TINJAUAN_PUSTAKA', 'Tinjauan Pustaka', 2, TRUE),
+  ('makalah', 'PEMBAHASAN', 'Pembahasan', 3, TRUE),
+  ('makalah', 'KESIMPULAN', 'Kesimpulan', 4, TRUE),
+  ('praktikum', 'PENDAHULUAN', 'Pendahuluan', 1, TRUE),
+  ('praktikum', 'METODE', 'Metode Praktikum', 2, TRUE),
+  ('praktikum', 'HASIL', 'Hasil', 3, TRUE),
+  ('praktikum', 'KESIMPULAN', 'Kesimpulan', 4, TRUE),
+  ('proposal', 'LATAR_BELAKANG', 'Latar Belakang', 1, TRUE),
+  ('proposal', 'TUJUAN', 'Tujuan', 2, TRUE),
+  ('proposal', 'METODOLOGI', 'Metodologi', 3, TRUE),
+  ('proposal', 'RAB', 'Rencana Anggaran Biaya', 4, TRUE),
+  ('skripsi', 'BAB_1', 'Bab 1 Pendahuluan', 1, TRUE),
+  ('skripsi', 'BAB_2', 'Bab 2 Tinjauan Pustaka', 2, TRUE),
+  ('skripsi', 'BAB_3', 'Bab 3 Metodologi', 3, TRUE),
+  ('skripsi', 'BAB_4', 'Bab 4 Hasil dan Pembahasan', 4, TRUE),
+  ('skripsi', 'BAB_5', 'Bab 5 Kesimpulan dan Saran', 5, TRUE);
+
 CREATE TABLE presentation_jobs (
   presentation_job_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   institution_id UUID NOT NULL REFERENCES institutions(institution_id),

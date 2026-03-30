@@ -164,13 +164,18 @@ components:
 					type: boolean
 		ValidateStructureRequest:
 			type: object
-			required: [documentId, templateType]
+			required: [documentId, templateType, detectedSectionCodes]
 			properties:
 				documentId:
 					type: string
 				templateType:
 					type: string
 					enum: [praktikum, makalah, proposal, skripsi]
+				detectedSectionCodes:
+					type: array
+					maxItems: 100
+					items:
+						type: string
 		ValidateStructureResponse:
 			type: object
 			required: [structureReportId, isStructureComplete, missingSections]

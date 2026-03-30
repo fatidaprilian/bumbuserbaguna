@@ -1,3 +1,5 @@
+import type { PresentationGenerationRepository } from "../repository/presentation-generation.repository-contract";
+
 export interface GeneratePresentationCommand {
   tenantId: string;
   userId: string;
@@ -12,14 +14,30 @@ export interface PresentationGenerationResult {
 }
 
 export class PresentationGenerationService {
+  constructor(
+    private readonly presentationGenerationRepository: PresentationGenerationRepository,
+  ) {}
+
   public generatePresentationFromReport(
     command: GeneratePresentationCommand,
-  ): PresentationGenerationResult {
+  ): Promise<PresentationGenerationResult> {
+    return this.enqueuePresentationGeneration(command);
+  }
+
+  private async enqueuePresentationGeneration(
+    command: GeneratePresentationCommand,
+  ): Promise<PresentationGenerationResult> {
     const slideCount = Math.max(8, Math.min(command.targetSlideCount, 20));
-    void slideCount;
+    const presentationId = await this.presentationGenerationRepository.createPresentationJob(
+      command.tenantId,
+      command.userId,
+      command.documentId,
+      slideCount,
+      command.audienceLevel,
+    );
 
     return {
-      presentationId: "presentation_placeholder",
+      presentationId,
       jobStatus: "queued",
     };
   }

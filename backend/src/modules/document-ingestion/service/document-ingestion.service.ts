@@ -1,3 +1,6 @@
+import { createIdentifier } from "../../../shared/identifier";
+import type { DocumentIngestionRepository } from "../repository/document-ingestion.repository-contract";
+
 export interface UploadDocumentCommand {
   tenantId: string;
   userId: string;
@@ -14,11 +17,24 @@ export interface DocumentIngestionResult {
 }
 
 export class DocumentIngestionService {
-  public enqueueDocumentIngestion(command: UploadDocumentCommand): DocumentIngestionResult {
+  constructor(private readonly documentIngestionRepository: DocumentIngestionRepository) {}
+
+  public async enqueueDocumentIngestion(
+    command: UploadDocumentCommand,
+  ): Promise<DocumentIngestionResult> {
+    const persistedDocumentVersion = await this.documentIngestionRepository.createDocumentVersion(
+      command.tenantId,
+      command.userId,
+      command.assignmentType,
+      command.fileName,
+      command.mimeType,
+      command.fileSizeBytes,
+    );
+
     return {
-      documentId: `doc_${command.userId}`,
-      documentVersionId: "version_placeholder",
-      processingJobId: "job_placeholder",
+      documentId: persistedDocumentVersion.documentId,
+      documentVersionId: persistedDocumentVersion.documentVersionId,
+      processingJobId: createIdentifier("job"),
     };
   }
 }
