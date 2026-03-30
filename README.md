@@ -1,6 +1,6 @@
 # bumbuserbaguna
 
-Platform cek plagiarisme untuk siswa SMP, SMA/SMK, dan mahasiswa dengan pendekatan enterprise-grade dari tahap perencanaan.
+Platform tools akademik untuk siswa SMP, SMA/SMK, dan mahasiswa, mencakup plagiarism check, struktur laporan otomatis, citation helper, dan generator presentasi dari laporan.
 
 ## Status
 
@@ -9,12 +9,13 @@ Repository saat ini fokus pada perencanaan awal sebelum coding aplikasi inti.
 ## Dokumentasi Utama
 
 1. docs/PRODUCT_RESEARCH.md
-2. docs/architecture/SYSTEM_ARCHITECTURE.md
-3. docs/security/SECURITY_BASELINE.md
-4. docs/database/DATABASE_ARCHITECTURE.md
-5. docs/ai/AI_STRATEGY.md
-6. docs/roadmap/IMPLEMENTATION_ROADMAP.md
-7. docs/README.md
+2. docs/PRODUCT_TOOL_CATALOG.md
+3. docs/architecture/SYSTEM_ARCHITECTURE.md
+4. docs/security/SECURITY_BASELINE.md
+5. docs/database/DATABASE_ARCHITECTURE.md
+6. docs/ai/AI_STRATEGY.md
+7. docs/roadmap/IMPLEMENTATION_ROADMAP.md
+8. docs/README.md
 
 ## Prinsip Teknis
 
@@ -31,5 +32,6 @@ Gunakan file .env.example sebagai referensi variabel konfigurasi lokal.
 
 1. Inisialisasi backend modular (transport, service, repository).
 2. Implementasi pipeline upload dan normalisasi dokumen.
-3. Implementasi lexical similarity engine sebagai baseline.
-4. Tambahkan AI Gateway untuk semantic similarity tahap berikutnya.
+3. Implementasi tool basic: plagiarism basic, citation helper, struktur laporan otomatis.
+4. Tambahkan generator presentasi dari laporan sebagai wave kedua.
+5. Tambahkan AI Gateway untuk semantic workflows tanpa lock-in provider.

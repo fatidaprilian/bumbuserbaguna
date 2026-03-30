@@ -2,7 +2,8 @@
 
 ## Product and Planning
 1. PRODUCT_RESEARCH.md
-2. roadmap/IMPLEMENTATION_ROADMAP.md
+2. PRODUCT_TOOL_CATALOG.md
+3. roadmap/IMPLEMENTATION_ROADMAP.md
 
 ## Architecture
 1. architecture/SYSTEM_ARCHITECTURE.md

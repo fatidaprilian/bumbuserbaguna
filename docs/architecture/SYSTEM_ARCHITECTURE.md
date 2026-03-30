@@ -13,19 +13,24 @@ Layer order:
 1. identity-access
 2. document-ingestion
 3. text-normalization
-4. similarity-analysis
-5. report-generation
-6. institution-admin
-7. billing-quota
-8. audit-observability
+4. plagiarism-analysis
+5. citation-quality
+6. report-structuring
+7. presentation-generation
+8. study-assistant
+9. institution-admin
+10. billing-quota
+11. audit-observability
 
 ## 3. High-Level Flow
-1. User uploads document.
-2. Ingestion module validates and stores file metadata.
+1. User uploads document or enters assignment brief.
+2. Ingestion module validates and stores source artifacts.
 3. Async worker extracts text and normalizes chunks.
-4. Similarity module runs lexical and semantic matching.
-5. Result module persists evidence and score.
-6. Report module renders downloadable output.
+4. Tool orchestrator routes request to selected tool family.
+5. Plagiarism and citation modules produce evidence and scores.
+6. Structuring module checks chapter format and completeness.
+7. Presentation module converts report structure into slide draft.
+8. Result module persists outputs and exposes downloadable artifacts.
 
 ## 4. Integration Boundaries
 1. No controller may call database directly.
@@ -56,10 +61,11 @@ Layer order:
 3. Circuit breaker around AI provider adapters.
 4. Retry only for transient failures with exponential backoff.
 5. Dead-letter queue for failed analysis jobs.
+6. Graceful fallback from semantic pipeline to lexical baseline.
 
 ## 8. Observability Requirements
 1. Structured logs with trace_id and user_id.
-2. Metrics: queue latency, analysis duration, error rate, cost per job.
+2. Metrics: queue latency, tool duration, error rate, cost per job.
 3. Distributed tracing for request-to-worker lifecycle.
 4. Alerting for provider failure and queue backlog.
 
@@ -68,6 +74,7 @@ Layer order:
 2. Consistent error envelope with machine-readable code.
 3. Pagination required for list endpoints.
 4. Rate limit headers exposed to clients.
+5. Tool endpoints grouped by capability family, not by UI page.
 
 ## 10. Migration Trigger to Microservices
 Split only if at least two conditions are true:
