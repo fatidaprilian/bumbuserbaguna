@@ -1,5 +1,5 @@
-import { createIdentifier } from "../../../shared/identifier";
-import type { DocumentIngestionRepository } from "../repository/document-ingestion.repository-contract";
+import { createIdentifier } from "../../../shared/identifier.ts";
+import type { DocumentIngestionRepository } from "../repository/document-ingestion.repository-contract.ts";
 
 export interface UploadDocumentCommand {
   tenantId: string;

@@ -1,12 +1,12 @@
-import type { ApiSuccessEnvelope } from "../../../shared/contracts/api-envelope";
-import type { RequestContext } from "../../../shared/transport-context";
-import { validateReportStructureSchema } from "../../../shared/validation/report-structuring.schema";
-import { parseBoundaryInput } from "../../../shared/validation/validate-input";
-import type { ReportStructuringService } from "../service/report-structuring.service";
+import type { ApiSuccessEnvelope } from "../../../shared/contracts/api-envelope.ts";
+import type { RequestContext } from "../../../shared/transport-context.ts";
+import { validateReportStructureSchema } from "../../../shared/validation/report-structuring.schema.ts";
+import { parseBoundaryInput } from "../../../shared/validation/validate-input.ts";
+import type { ReportStructuringService } from "../service/report-structuring.service.ts";
 import type {
   ValidateStructureRequestBody,
   ValidateStructureResponseBody,
-} from "./report-structuring.controller-contract";
+} from "./report-structuring.controller-contract.ts";
 
 export class ReportStructuringController {
   constructor(private readonly reportStructuringService: ReportStructuringService) {}

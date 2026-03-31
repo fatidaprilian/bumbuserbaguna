@@ -1,4 +1,4 @@
-import type { PlagiarismAnalysisRepository } from "../repository/plagiarism-analysis.repository-contract";
+import type { PlagiarismAnalysisRepository } from "../repository/plagiarism-analysis.repository-contract.ts";
 
 export interface RunPlagiarismCheckCommand {
   tenantId: string;

@@ -1,12 +1,12 @@
-import type { ApiSuccessEnvelope } from "../../../shared/contracts/api-envelope";
-import type { RequestContext } from "../../../shared/transport-context";
-import { uploadDocumentSchema } from "../../../shared/validation/document-ingestion.schema";
-import { parseBoundaryInput } from "../../../shared/validation/validate-input";
-import type { DocumentIngestionService } from "../service/document-ingestion.service";
+import type { ApiSuccessEnvelope } from "../../../shared/contracts/api-envelope.ts";
+import type { RequestContext } from "../../../shared/transport-context.ts";
+import { uploadDocumentSchema } from "../../../shared/validation/document-ingestion.schema.ts";
+import { parseBoundaryInput } from "../../../shared/validation/validate-input.ts";
+import type { DocumentIngestionService } from "../service/document-ingestion.service.ts";
 import type {
   UploadDocumentRequestBody,
   UploadDocumentResponseBody,
-} from "./document-ingestion.controller-contract";
+} from "./document-ingestion.controller-contract.ts";
 
 export class DocumentIngestionController {
   constructor(private readonly documentIngestionService: DocumentIngestionService) {}

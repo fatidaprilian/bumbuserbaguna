@@ -1,43 +1,34 @@
-import type { DatabaseClient } from "../../../shared/database/postgresql-client";
-import { ApplicationError } from "../../../shared/errors/application-error";
-import type { PresentationGenerationRepository } from "./presentation-generation.repository-contract";
+import type { DatabaseQueryExecutor } from "../../../shared/database/postgresql-client.ts";
+import type { PresentationGenerationRepository } from "./presentation-generation.repository-contract.ts";
 
-interface PresentationJobIdentifierRow {
+interface PresentationJobRow {
   presentation_job_id: string;
 }
 
-export class PostgresqlPresentationGenerationRepository
-  implements PresentationGenerationRepository
-{
-  constructor(private readonly databaseClient: DatabaseClient) {}
+export class PostgresqlPresentationGenerationRepository implements PresentationGenerationRepository {
+  constructor(private readonly databaseClient: DatabaseQueryExecutor) {}
 
   public async createPresentationJob(
     tenantId: string,
-    userId: string,
+    _userId: string,
     documentId: string,
     targetSlideCount: number,
     audienceLevel: string,
   ): Promise<string> {
-    const creationResult = await this.databaseClient.query<PresentationJobIdentifierRow>(
-      `INSERT INTO presentation_jobs (
-         presentation_job_id,
-         institution_id,
-         document_id,
-         target_slide_count,
-         audience_level,
-         job_status
-       ) VALUES (gen_random_uuid(), $1::uuid, $2::uuid, $3, $4, $5)
-       RETURNING presentation_job_id::text`,
-      [tenantId, documentId, targetSlideCount, audienceLevel, "queued"],
+    const queryResult = await this.databaseClient.query<PresentationJobRow>(
+      `INSERT INTO presentation_jobs (institution_id, document_id, target_slide_count, audience_level, job_status)
+       VALUES ($1, $2, $3, $4, 'queued')
+       RETURNING presentation_job_id`,
+      [tenantId, documentId, targetSlideCount, audienceLevel],
     );
 
-    void userId;
-
-    const createdJobRow = creationResult.rows[0];
-    if (!createdJobRow) {
-      throw new ApplicationError("INTERNAL_ERROR", "Failed to create presentation job");
+    const presentationJobRow = queryResult.rows[0];
+    if (!presentationJobRow) {
+      throw new Error(
+        "[PresentationGenerationRepository] presentation_jobs INSERT returned no rows — unexpected state",
+      );
     }
 
-    return createdJobRow.presentation_job_id;
+    return presentationJobRow.presentation_job_id;
   }
 }

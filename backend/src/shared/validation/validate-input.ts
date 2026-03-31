@@ -1,6 +1,5 @@
 import { ZodError, type ZodSchema } from "zod";
-
-import { ApplicationError } from "../errors/application-error";
+import { ApplicationError } from "../errors/application-error.ts";
 
 export function parseBoundaryInput<TParsedInput>(
   schema: ZodSchema<TParsedInput>,

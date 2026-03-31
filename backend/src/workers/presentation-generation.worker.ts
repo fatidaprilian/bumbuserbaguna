@@ -1,4 +1,4 @@
-import type { PresentationGenerationService } from "../modules/presentation-generation/service/presentation-generation.service";
+import type { PresentationGenerationService } from "../modules/presentation-generation/service/presentation-generation.service.ts";
 
 export interface PresentationWorkerPayload {
   tenantId: string;
