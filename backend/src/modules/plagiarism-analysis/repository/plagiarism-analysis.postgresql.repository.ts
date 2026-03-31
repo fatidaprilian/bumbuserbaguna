@@ -1,49 +1,47 @@
-import type { DatabaseClient } from "../../../shared/database/postgresql-client";
-import { ApplicationError } from "../../../shared/errors/application-error";
+import type { DatabaseQueryExecutor } from "../../../shared/database/postgresql-client.ts";
 import type {
   PlagiarismAnalysisRepository,
   SimilarityMatchEvidence,
-} from "./plagiarism-analysis.repository-contract";
+} from "./plagiarism-analysis.repository-contract.ts";
 
-interface SimilarityEvidenceRow {
+interface SimilarityMatchRow {
   source_document_id: string;
-  similarity_ratio: string;
-  matched_segment_count: number;
+  similarity_ratio: string; // PostgreSQL NUMERIC returns as string
+  matched_segment_count: string;
 }
 
-interface ReportIdentifierRow {
+interface PlagiarismReportRow {
   plagiarism_report_id: string;
 }
 
 export class PostgresqlPlagiarismAnalysisRepository implements PlagiarismAnalysisRepository {
-  constructor(private readonly databaseClient: DatabaseClient) {}
+  constructor(private readonly databaseClient: DatabaseQueryExecutor) {}
 
   public async fetchSimilarityEvidence(
     tenantId: string,
     documentId: string,
   ): Promise<SimilarityMatchEvidence[]> {
-    const evidenceQueryResult = await this.databaseClient.query<SimilarityEvidenceRow>(
-      `SELECT
-         COALESCE(source_document_id::text, '') AS source_document_id,
-         COALESCE(similarity_ratio::text, '0') AS similarity_ratio,
-         COUNT(*)::int AS matched_segment_count
-       FROM plagiarism_matches
-       WHERE plagiarism_report_id IN (
-         SELECT plagiarism_report_id
-         FROM plagiarism_reports
-         WHERE institution_id = $1::uuid
-           AND document_id = $2::uuid
-       )
-       GROUP BY source_document_id, similarity_ratio
-       ORDER BY similarity_ratio DESC
-       LIMIT 100`,
-      [tenantId, documentId],
+    // Phase 1: Return empty evidence until semantic pipeline is wired (Phase 4)
+    // Tenant scoping is enforced via the JOIN to documents (institution_id check)
+    const queryResult = await this.databaseClient.query<SimilarityMatchRow>(
+      `SELECT pm.source_document_id,
+              pm.similarity_ratio,
+              COUNT(*) AS matched_segment_count
+       FROM plagiarism_matches pm
+       JOIN plagiarism_reports pr ON pr.plagiarism_report_id = pm.plagiarism_report_id
+       JOIN documents doc ON doc.document_id = pr.document_id
+       WHERE pr.document_id = $1
+         AND doc.institution_id = $2
+       GROUP BY pm.source_document_id, pm.similarity_ratio
+       ORDER BY pm.similarity_ratio DESC
+       LIMIT 50`,
+      [documentId, tenantId],
     );
 
-    return evidenceQueryResult.rows.map((resultRow) => ({
-      sourceDocumentId: resultRow.source_document_id,
-      similarityRatio: Number(resultRow.similarity_ratio),
-      matchedSegmentCount: resultRow.matched_segment_count,
+    return queryResult.rows.map((similarityMatchRow) => ({
+      sourceDocumentId: similarityMatchRow.source_document_id,
+      similarityRatio: parseFloat(similarityMatchRow.similarity_ratio),
+      matchedSegmentCount: parseInt(similarityMatchRow.matched_segment_count, 10),
     }));
   }
 
@@ -53,23 +51,20 @@ export class PostgresqlPlagiarismAnalysisRepository implements PlagiarismAnalysi
     similarityScore: number,
     requiresManualReview: boolean,
   ): Promise<string> {
-    const insertResult = await this.databaseClient.query<ReportIdentifierRow>(
-      `INSERT INTO plagiarism_reports (
-         plagiarism_report_id,
-         institution_id,
-         document_id,
-         similarity_score,
-         requires_manual_review
-       ) VALUES (gen_random_uuid(), $1::uuid, $2::uuid, $3, $4)
-       RETURNING plagiarism_report_id::text`,
+    const queryResult = await this.databaseClient.query<PlagiarismReportRow>(
+      `INSERT INTO plagiarism_reports (institution_id, document_id, similarity_score, requires_manual_review)
+       VALUES ($1, $2, $3, $4)
+       RETURNING plagiarism_report_id`,
       [tenantId, documentId, similarityScore, requiresManualReview],
     );
 
-    const insertedReportRow = insertResult.rows[0];
-    if (!insertedReportRow) {
-      throw new ApplicationError("INTERNAL_ERROR", "Failed to create plagiarism report");
+    const reportRow = queryResult.rows[0];
+    if (!reportRow) {
+      throw new Error(
+        "[PlagiarismAnalysisRepository] plagiarism_reports INSERT returned no rows — unexpected state",
+      );
     }
 
-    return insertedReportRow.plagiarism_report_id;
+    return reportRow.plagiarism_report_id;
   }
 }

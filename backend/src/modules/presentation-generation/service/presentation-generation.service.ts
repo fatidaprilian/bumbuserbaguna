@@ -1,4 +1,4 @@
-import type { PresentationGenerationRepository } from "../repository/presentation-generation.repository-contract";
+import type { PresentationGenerationRepository } from "../repository/presentation-generation.repository-contract.ts";
 
 export interface GeneratePresentationCommand {
   tenantId: string;

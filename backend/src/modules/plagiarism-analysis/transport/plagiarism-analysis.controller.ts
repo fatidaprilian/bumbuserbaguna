@@ -1,12 +1,12 @@
-import type { ApiSuccessEnvelope } from "../../../shared/contracts/api-envelope";
-import type { RequestContext } from "../../../shared/transport-context";
-import { runPlagiarismCheckSchema } from "../../../shared/validation/plagiarism-analysis.schema";
-import { parseBoundaryInput } from "../../../shared/validation/validate-input";
-import type { PlagiarismAnalysisService } from "../service/plagiarism-analysis.service";
+import type { ApiSuccessEnvelope } from "../../../shared/contracts/api-envelope.ts";
+import type { RequestContext } from "../../../shared/transport-context.ts";
+import { runPlagiarismCheckSchema } from "../../../shared/validation/plagiarism-analysis.schema.ts";
+import { parseBoundaryInput } from "../../../shared/validation/validate-input.ts";
+import type { PlagiarismAnalysisService } from "../service/plagiarism-analysis.service.ts";
 import type {
   RunPlagiarismCheckRequestBody,
   RunPlagiarismCheckResponseBody,
-} from "./plagiarism-analysis.controller-contract";
+} from "./plagiarism-analysis.controller-contract.ts";
 
 export class PlagiarismAnalysisController {
   constructor(private readonly plagiarismAnalysisService: PlagiarismAnalysisService) {}

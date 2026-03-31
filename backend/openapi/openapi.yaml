@@ -1,229 +1,464 @@
 openapi: 3.1.0
 info:
-	title: Bumbuserbaguna API
-	version: 0.1.0
-	description: Multi-tool academic productivity API for plagiarism checks, structure validation, and presentation generation.
+  title: Bumbuserbaguna API
+  version: 0.2.0
+  description: Multi-tool academic productivity API — plagiarism checks, structure validation, presentation generation, and citation support.
+
 servers:
-	- url: https://api.bumbuserbaguna.local
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://api.bumbuserbaguna.local
+    description: Production
+
+security:
+  - BearerAuth: []
+
 paths:
-	/v1/documents:upload:
-		post:
-			summary: Upload a document and enqueue ingestion
-			operationId: uploadDocument
-			tags: [Document Ingestion]
-			requestBody:
-				required: true
-				content:
-					application/json:
-						schema:
-							$ref: '#/components/schemas/UploadDocumentRequest'
-			responses:
-				'202':
-					description: Accepted for asynchronous ingestion
-					content:
-						application/json:
-							schema:
-								$ref: '#/components/schemas/UploadDocumentResponse'
-				'400':
-					$ref: '#/components/responses/ValidationError'
-				'401':
-					$ref: '#/components/responses/UnauthorizedError'
-	/v1/tools/plagiarism:run:
-		post:
-			summary: Run plagiarism analysis for a document
-			operationId: runPlagiarismCheck
-			tags: [Plagiarism Analysis]
-			requestBody:
-				required: true
-				content:
-					application/json:
-						schema:
-							$ref: '#/components/schemas/RunPlagiarismRequest'
-			responses:
-				'200':
-					description: Plagiarism analysis completed
-					content:
-						application/json:
-							schema:
-								$ref: '#/components/schemas/RunPlagiarismResponse'
-				'400':
-					$ref: '#/components/responses/ValidationError'
-				'429':
-					$ref: '#/components/responses/RateLimitedError'
-	/v1/tools/report-structure:validate:
-		post:
-			summary: Validate report structure against template rules
-			operationId: validateReportStructure
-			tags: [Report Structuring]
-			requestBody:
-				required: true
-				content:
-					application/json:
-						schema:
-							$ref: '#/components/schemas/ValidateStructureRequest'
-			responses:
-				'200':
-					description: Structure validation completed
-					content:
-						application/json:
-							schema:
-								$ref: '#/components/schemas/ValidateStructureResponse'
-				'400':
-					$ref: '#/components/responses/ValidationError'
-	/v1/tools/presentation:generate:
-		post:
-			summary: Generate presentation draft from report content
-			operationId: generatePresentation
-			tags: [Presentation Generation]
-			requestBody:
-				required: true
-				content:
-					application/json:
-						schema:
-							$ref: '#/components/schemas/GeneratePresentationRequest'
-			responses:
-				'202':
-					description: Presentation generation queued
-					content:
-						application/json:
-							schema:
-								$ref: '#/components/schemas/GeneratePresentationResponse'
-				'400':
-					$ref: '#/components/responses/ValidationError'
-				'429':
-					$ref: '#/components/responses/RateLimitedError'
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /v1/auth/register:
+    post:
+      summary: Register a new user account
+      operationId: registerUser
+      tags: [Identity & Access]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '201':
+          description: Account created and tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /v1/auth/login:
+    post:
+      summary: Log in with email and password
+      operationId: loginUser
+      tags: [Identity & Access]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserRequest'
+      responses:
+        '200':
+          description: Login successful — tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /v1/auth/refresh:
+    post:
+      summary: Obtain a new access token using a refresh token
+      operationId: refreshAccessToken
+      tags: [Identity & Access]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /v1/documents:upload:
+    post:
+      summary: Upload a document and enqueue ingestion
+      operationId: uploadDocument
+      tags: [Document Ingestion]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadDocumentRequest'
+      responses:
+        '202':
+          description: Accepted for asynchronous ingestion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadDocumentResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /v1/tools/plagiarism:run:
+    post:
+      summary: Run plagiarism analysis for a document
+      operationId: runPlagiarismCheck
+      tags: [Plagiarism Analysis]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunPlagiarismRequest'
+      responses:
+        '200':
+          description: Plagiarism analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunPlagiarismResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitedError'
+
+  /v1/tools/report-structure:validate:
+    post:
+      summary: Validate report structure against template rules
+      operationId: validateReportStructure
+      tags: [Report Structuring]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateStructureRequest'
+      responses:
+        '200':
+          description: Structure validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateStructureResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /v1/tools/presentation:generate:
+    post:
+      summary: Generate presentation draft from report content
+      operationId: generatePresentation
+      tags: [Presentation Generation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneratePresentationRequest'
+      responses:
+        '202':
+          description: Presentation generation queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratePresentationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitedError'
+
 components:
-	responses:
-		ValidationError:
-			description: Input validation failed
-			content:
-				application/json:
-					schema:
-						$ref: '#/components/schemas/ErrorEnvelope'
-		UnauthorizedError:
-			description: Authentication is required
-			content:
-				application/json:
-					schema:
-						$ref: '#/components/schemas/ErrorEnvelope'
-		RateLimitedError:
-			description: Too many requests
-			content:
-				application/json:
-					schema:
-						$ref: '#/components/schemas/ErrorEnvelope'
-	schemas:
-		UploadDocumentRequest:
-			type: object
-			required: [assignmentType, fileName, mimeType, fileSizeBytes]
-			properties:
-				assignmentType:
-					type: string
-					enum: [report, paper, presentation]
-				fileName:
-					type: string
-					minLength: 3
-				mimeType:
-					type: string
-				fileSizeBytes:
-					type: integer
-					minimum: 1
-		UploadDocumentResponse:
-			type: object
-			required: [documentId, documentVersionId, processingJobId]
-			properties:
-				documentId:
-					type: string
-				documentVersionId:
-					type: string
-				processingJobId:
-					type: string
-		RunPlagiarismRequest:
-			type: object
-			required: [documentId, analysisMode, languageScope]
-			properties:
-				documentId:
-					type: string
-				analysisMode:
-					type: string
-					enum: [basic, advanced]
-				languageScope:
-					type: string
-					enum: [id, id-en]
-		RunPlagiarismResponse:
-			type: object
-			required: [reportId, similarityScore, requiresManualReview]
-			properties:
-				reportId:
-					type: string
-				similarityScore:
-					type: number
-					minimum: 0
-					maximum: 100
-				requiresManualReview:
-					type: boolean
-		ValidateStructureRequest:
-			type: object
-			required: [documentId, templateType, detectedSectionCodes]
-			properties:
-				documentId:
-					type: string
-				templateType:
-					type: string
-					enum: [praktikum, makalah, proposal, skripsi]
-				detectedSectionCodes:
-					type: array
-					maxItems: 100
-					items:
-						type: string
-		ValidateStructureResponse:
-			type: object
-			required: [structureReportId, isStructureComplete, missingSections]
-			properties:
-				structureReportId:
-					type: string
-				isStructureComplete:
-					type: boolean
-				missingSections:
-					type: array
-					items:
-						type: string
-		GeneratePresentationRequest:
-			type: object
-			required: [documentId, targetSlideCount, audienceLevel]
-			properties:
-				documentId:
-					type: string
-				targetSlideCount:
-					type: integer
-					minimum: 8
-					maximum: 20
-				audienceLevel:
-					type: string
-					enum: [smp, sma-smk, university]
-		GeneratePresentationResponse:
-			type: object
-			required: [presentationId, jobStatus]
-			properties:
-				presentationId:
-					type: string
-				jobStatus:
-					type: string
-					enum: [queued, processing, completed]
-		ErrorEnvelope:
-			type: object
-			required: [success, traceId, error]
-			properties:
-				success:
-					type: boolean
-					enum: [false]
-				traceId:
-					type: string
-				error:
-					type: object
-					required: [code, message]
-					properties:
-						code:
-							type: string
-						message:
-							type: string
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token issued by /v1/auth/login or /v1/auth/register
+
+  responses:
+    ValidationError:
+      description: Input validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    UnauthorizedError:
+      description: Authentication is required or token is invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimitedError:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        timestamp:
+          type: string
+          format: date-time
+
+    RegisterUserRequest:
+      type: object
+      required: [institutionId, emailAddress, fullName, roleCode, password]
+      properties:
+        institutionId:
+          type: string
+          format: uuid
+        emailAddress:
+          type: string
+          format: email
+        fullName:
+          type: string
+          minLength: 2
+          maxLength: 150
+        roleCode:
+          type: string
+          enum: [student, teacher, admin]
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+
+    LoginUserRequest:
+      type: object
+      required: [institutionId, emailAddress, password]
+      properties:
+        institutionId:
+          type: string
+          format: uuid
+        emailAddress:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    AuthTokenResponse:
+      type: object
+      required: [success, traceId, payload]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        traceId:
+          type: string
+        payload:
+          type: object
+          required: [accessToken, refreshToken, userId, roleCode]
+          properties:
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            userId:
+              type: string
+              format: uuid
+            roleCode:
+              type: string
+              enum: [student, teacher, admin]
+
+    RefreshTokenResponse:
+      type: object
+      required: [success, traceId, payload]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        traceId:
+          type: string
+        payload:
+          type: object
+          required: [accessToken]
+          properties:
+            accessToken:
+              type: string
+
+    UploadDocumentRequest:
+      type: object
+      required: [assignmentType, fileName, mimeType, fileSizeBytes]
+      properties:
+        assignmentType:
+          type: string
+          enum: [report, paper, presentation]
+        fileName:
+          type: string
+          minLength: 3
+        mimeType:
+          type: string
+        fileSizeBytes:
+          type: integer
+          minimum: 1
+    UploadDocumentResponse:
+      type: object
+      required: [success, traceId, payload]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        traceId:
+          type: string
+        payload:
+          type: object
+          required: [documentId, documentVersionId, processingJobId]
+          properties:
+            documentId:
+              type: string
+            documentVersionId:
+              type: string
+            processingJobId:
+              type: string
+
+    RunPlagiarismRequest:
+      type: object
+      required: [documentId, analysisMode, languageScope]
+      properties:
+        documentId:
+          type: string
+        analysisMode:
+          type: string
+          enum: [basic, advanced]
+        languageScope:
+          type: string
+          enum: [id, id-en]
+    RunPlagiarismResponse:
+      type: object
+      required: [success, traceId, payload]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        traceId:
+          type: string
+        payload:
+          type: object
+          required: [reportId, similarityScore, requiresManualReview]
+          properties:
+            reportId:
+              type: string
+            similarityScore:
+              type: number
+              minimum: 0
+              maximum: 100
+            requiresManualReview:
+              type: boolean
+
+    ValidateStructureRequest:
+      type: object
+      required: [documentId, templateType, detectedSectionCodes]
+      properties:
+        documentId:
+          type: string
+        templateType:
+          type: string
+          enum: [praktikum, makalah, proposal, skripsi]
+        detectedSectionCodes:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+    ValidateStructureResponse:
+      type: object
+      required: [success, traceId, payload]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        traceId:
+          type: string
+        payload:
+          type: object
+          required: [structureReportId, isStructureComplete, missingSections]
+          properties:
+            structureReportId:
+              type: string
+            isStructureComplete:
+              type: boolean
+            missingSections:
+              type: array
+              items:
+                type: string
+
+    GeneratePresentationRequest:
+      type: object
+      required: [documentId, targetSlideCount, audienceLevel]
+      properties:
+        documentId:
+          type: string
+        targetSlideCount:
+          type: integer
+          minimum: 8
+          maximum: 20
+        audienceLevel:
+          type: string
+          enum: [smp, sma-smk, university]
+    GeneratePresentationResponse:
+      type: object
+      required: [success, traceId, payload]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        traceId:
+          type: string
+        payload:
+          type: object
+          required: [presentationId, jobStatus]
+          properties:
+            presentationId:
+              type: string
+            jobStatus:
+              type: string
+              enum: [queued, processing, completed]
+
+    ErrorEnvelope:
+      type: object
+      required: [success, traceId, error]
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        traceId:
+          type: string
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string

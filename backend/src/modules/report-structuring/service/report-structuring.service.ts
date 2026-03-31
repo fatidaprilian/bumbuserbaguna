@@ -1,5 +1,5 @@
-import { createIdentifier } from "../../../shared/identifier";
-import type { ReportStructuringRepository } from "../repository/report-structuring.repository-contract";
+import { createIdentifier } from "../../../shared/identifier.ts";
+import type { ReportStructuringRepository } from "../repository/report-structuring.repository-contract.ts";
 
 export interface ValidateReportStructureCommand {
   tenantId: string;

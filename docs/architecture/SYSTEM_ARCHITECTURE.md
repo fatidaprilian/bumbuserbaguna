@@ -39,13 +39,25 @@ Layer order:
 4. Shared kernel contains common errors, logging, and config.
 
 ## 5. Recommended Stack (Enterprise-Ready)
-1. Backend API: TypeScript with NestJS.
-2. Worker pipeline: TypeScript workers with queue system.
-3. Frontend: Next.js with React Query for server state.
+
+> **ADR-001 — HTTP Framework: Fastify (bukan NestJS)**
+>
+> Dokumen awal mencantumkan NestJS. Setelah scaffold awal dibangun, keputusan diubah ke **Fastify** karena:
+> 1. Scaffold existing sudah menggunakan plain TypeScript modular monolith *tanpa* NestJS decorator pattern.
+>    Menambahkan NestJS di titik ini memerlukan refactor total (IoC container, modul decorator, `@Injectable`, dll.).
+> 2. Fastify selaras dengan layer separation yang sudah ada: Transport → Service → Repository.
+> 3. Fastify menyediakan type-safety native, plugin ekosistem lengkap (`@fastify/jwt`, `@fastify/helmet`, `@fastify/rate-limit`), dan performa yang sangat baik.
+> 4. Jika di masa depan tim berkembang dan scaling memerlukan NestJS, migrasi dari Fastify ke NestJS lebih mudah daripada merombak arsitektur monolith ke NestJS dari awal.
+>
+> **Keputusan final: Tetap Fastify. NestJS dipertimbangkan ulang hanya jika ada trigger microservices (lihat Bagian 10).**
+
+1. Backend API: TypeScript dengan **Fastify** (bukan NestJS; lihat ADR-001 di atas).
+2. Worker pipeline: TypeScript workers dengan in-memory queue (Phase 1), Redis queue (Phase 3+).
+3. Frontend: Next.js dengan React Query untuk server state.
 4. Database: PostgreSQL.
-5. Object storage: S3-compatible bucket.
-6. Caching: Redis with explicit invalidation rules.
-7. Search index: PostgreSQL full-text first, vector index optional phase 2.
+5. Object storage: S3-compatible bucket (MinIO untuk local dev).
+6. Caching: Redis dengan explicit invalidation rules.
+7. Search index: PostgreSQL full-text terlebih dahulu, vector index opsional di Phase 2.
 
 ## 6. Deployment Topology
 1. API service instance group.

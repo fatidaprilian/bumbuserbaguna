@@ -1,4 +1,4 @@
-import type { PlagiarismAnalysisService } from "../modules/plagiarism-analysis/service/plagiarism-analysis.service";
+import type { PlagiarismAnalysisService } from "../modules/plagiarism-analysis/service/plagiarism-analysis.service.ts";
 
 export interface PlagiarismWorkerPayload {
   tenantId: string;

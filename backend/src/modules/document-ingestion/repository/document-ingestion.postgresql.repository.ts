@@ -1,17 +1,19 @@
-import type { DatabaseClient } from "../../../shared/database/postgresql-client";
-import { ApplicationError } from "../../../shared/errors/application-error";
+import type { DatabaseQueryExecutor } from "../../../shared/database/postgresql-client.ts";
 import type {
   DocumentIngestionRepository,
   PersistedDocumentVersion,
-} from "./document-ingestion.repository-contract";
+} from "./document-ingestion.repository-contract.ts";
 
-interface IdentifierRow {
+interface DocumentRow {
   document_id: string;
+}
+
+interface DocumentVersionRow {
   document_version_id: string;
 }
 
 export class PostgresqlDocumentIngestionRepository implements DocumentIngestionRepository {
-  constructor(private readonly databaseClient: DatabaseClient) {}
+  constructor(private readonly databaseClient: DatabaseQueryExecutor) {}
 
   public async createDocumentVersion(
     tenantId: string,
@@ -21,47 +23,43 @@ export class PostgresqlDocumentIngestionRepository implements DocumentIngestionR
     mimeType: string,
     fileSizeBytes: number,
   ): Promise<PersistedDocumentVersion> {
-    const insertedDocumentResult = await this.databaseClient.query<IdentifierRow>(
-      `INSERT INTO documents (
-         institution_id,
-         owner_user_id,
-         assignment_type,
-         original_file_name,
-         current_status
-       ) VALUES ($1::uuid, $2::uuid, $3, $4, $5)
-       RETURNING document_id::text`,
-      [tenantId, userId, assignmentType, fileName, "uploaded"],
+    // Step 1: Create the parent document record
+    const documentInsertResult = await this.databaseClient.query<DocumentRow>(
+      `INSERT INTO documents (institution_id, owner_user_id, assignment_type, original_file_name, current_status)
+       VALUES ($1, $2, $3, $4, 'pending')
+       RETURNING document_id`,
+      [tenantId, userId, assignmentType, fileName],
     );
 
-    const insertedDocumentRow = insertedDocumentResult.rows[0];
-    if (!insertedDocumentRow) {
-      throw new ApplicationError("INTERNAL_ERROR", "Failed to create document record");
+    const documentRow = documentInsertResult.rows[0];
+    if (!documentRow) {
+      throw new Error(
+        "[DocumentIngestionRepository] documents INSERT returned no rows — unexpected state",
+      );
     }
 
-    const documentId = insertedDocumentRow.document_id;
-    const sourceChecksum = `${documentId}-${fileSizeBytes}`;
-    const storagePath = `tenants/${tenantId}/documents/${documentId}/latest`;
+    // Step 2: Create the immutable version snapshot
+    // Storage path is a placeholder until the real upload service assigns a signed URL
+    const storagePath = `${tenantId}/${documentRow.document_id}/${Date.now()}-${fileName}`;
+    const sourceChecksum = "pending"; // Will be updated after file transfer completes
 
-    const insertedVersionResult = await this.databaseClient.query<IdentifierRow>(
-      `INSERT INTO document_versions (
-         document_id,
-         storage_path,
-         mime_type,
-         file_size_bytes,
-         source_checksum
-       ) VALUES ($1::uuid, $2, $3, $4, $5)
-       RETURNING document_id, document_version_id`,
-      [documentId, storagePath, mimeType, fileSizeBytes, sourceChecksum],
+    const versionInsertResult = await this.databaseClient.query<DocumentVersionRow>(
+      `INSERT INTO document_versions (document_id, storage_path, mime_type, file_size_bytes, source_checksum)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING document_version_id`,
+      [documentRow.document_id, storagePath, mimeType, fileSizeBytes, sourceChecksum],
     );
 
-    const insertedVersion = insertedVersionResult.rows[0];
-    if (!insertedVersion) {
-      throw new ApplicationError("INTERNAL_ERROR", "Failed to create document version");
+    const versionRow = versionInsertResult.rows[0];
+    if (!versionRow) {
+      throw new Error(
+        "[DocumentIngestionRepository] document_versions INSERT returned no rows — unexpected state",
+      );
     }
 
     return {
-      documentId: insertedVersion.document_id,
-      documentVersionId: insertedVersion.document_version_id,
+      documentId: documentRow.document_id,
+      documentVersionId: versionRow.document_version_id,
       storagePath,
     };
   }

@@ -1,8 +1,8 @@
-import type { DatabaseClient } from "../../../shared/database/postgresql-client";
+import type { DatabaseQueryExecutor } from "../../../shared/database/postgresql-client.ts";
 import type {
   ReportStructuringRepository,
   ReportTemplateSection,
-} from "./report-structuring.repository-contract";
+} from "./report-structuring.repository-contract.ts";
 
 interface ReportTemplateSectionRow {
   section_code: string;
@@ -11,10 +11,10 @@ interface ReportTemplateSectionRow {
 }
 
 export class PostgresqlReportStructuringRepository implements ReportStructuringRepository {
-  constructor(private readonly databaseClient: DatabaseClient) {}
+  constructor(private readonly databaseClient: DatabaseQueryExecutor) {}
 
   public async listTemplateSections(templateType: string): Promise<ReportTemplateSection[]> {
-    const templateSectionsResult = await this.databaseClient.query<ReportTemplateSectionRow>(
+    const queryResult = await this.databaseClient.query<ReportTemplateSectionRow>(
       `SELECT section_code, section_title, is_mandatory
        FROM report_template_sections
        WHERE template_type = $1
@@ -22,7 +22,7 @@ export class PostgresqlReportStructuringRepository implements ReportStructuringR
       [templateType],
     );
 
-    return templateSectionsResult.rows.map((sectionRow) => ({
+    return queryResult.rows.map((sectionRow) => ({
       sectionCode: sectionRow.section_code,
       sectionTitle: sectionRow.section_title,
       isMandatory: sectionRow.is_mandatory,
