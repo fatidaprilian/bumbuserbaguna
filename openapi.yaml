@@ -1,0 +1,475 @@
+openapi: 3.1.0
+info:
+  title: Bumbuserbaguna Academic Tools API
+  version: 0.3.0
+  description: |
+    Comprehensive academic tools platform with plagiarism detection, report structuring,
+    presentation generation, and role-based feature visibility.
+
+    **Phase 2 Update (v0.3.0)**:
+    - Role-based feature visibility APIs
+    - Feature access control middleware
+    - Per-institution quota model (coming Week 4)
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.bumbuserbaguna.edu
+    description: Production server
+
+components:
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+
+    ApiSuccessEnvelope:
+      type: object
+      required:
+        - success
+        - traceId
+        - payload
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        traceId:
+          type: string
+          description: Request trace ID for debugging
+        payload:
+          type: object
+
+    ApiErrorEnvelope:
+      type: object
+      required:
+        - success
+        - traceId
+        - error
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        traceId:
+          type: string
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - UNAUTHORIZED
+                - FORBIDDEN
+                - NOT_FOUND
+                - RATE_LIMITED
+                - INTERNAL_ERROR
+            message:
+              type: string
+
+    FeatureFlag:
+      type: object
+      properties:
+        featureCode:
+          type: string
+          example: plagiarism_v2
+        featureLabel:
+          type: string
+          example: Advanced Plagiarism (Paraphrase Detection)
+        description:
+          type: string
+          nullable: true
+
+    UserRole:
+      type: string
+      enum:
+        - student
+        - teacher
+        - admin
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from login endpoint
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags:
+        - System
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  # ===== Identity & Access (Public) =====
+  /v1/auth/register:
+    post:
+      summary: Register new user
+      tags:
+        - Identity & Access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - firstName
+                - lastName
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          userId:
+                            $ref: '#/components/schemas/UUID'
+                          email:
+                            type: string
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
+  /v1/auth/login:
+    post:
+      summary: Login user
+      tags:
+        - Identity & Access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                            description: JWT access token
+
+  # ===== Feature Visibility (Authenticated) =====
+  /v1/tools/features:
+    get:
+      summary: List all available features
+      tags:
+        - Feature Visibility
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Feature flags returned
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          featureFlags:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/FeatureFlag'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
+  /v1/tools/features:my-access:
+    get:
+      summary: Get features visible to current user's role
+      tags:
+        - Feature Visibility
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User's accessible features
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          visibleFeatures:
+                            type: array
+                            items:
+                              type: string
+                            example:
+                              - plagiarism_check
+                              - document_ingestion
+                              - report_structuring
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
+  /v1/admin/tools/features:set-visibility:
+    post:
+      summary: (Admin) Set feature visibility for a role
+      tags:
+        - Feature Visibility
+        - Admin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - featureCode
+                - roleCode
+                - isEnabled
+              properties:
+                featureCode:
+                  type: string
+                  example: plagiarism_v2
+                roleCode:
+                  $ref: '#/components/schemas/UserRole'
+                isEnabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Feature visibility updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          success:
+                            type: boolean
+                          message:
+                            type: string
+        '403':
+          description: Forbidden (requires admin role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorEnvelope'
+
+  # ===== Document Tools (Phase 1) =====
+  /v1/documents:upload:
+    post:
+      summary: Upload document for analysis
+      tags:
+        - Document Tools
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '202':
+          description: Document accepted for processing
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          documentId:
+                            $ref: '#/components/schemas/UUID'
+                          status:
+                            type: string
+
+  /v1/tools/plagiarism:run:
+    post:
+      summary: Run plagiarism analysis on document
+      tags:
+        - Document Tools
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - documentId
+              properties:
+                documentId:
+                  $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Plagiarism analysis result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          plagiarismPercentage:
+                            type: number
+                            minimum: 0
+                            maximum: 100
+                          sources:
+                            type: array
+                            items:
+                              type: object
+
+  /v1/tools/report-structure:validate:
+    post:
+      summary: Validate report structure
+      tags:
+        - Document Tools
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - documentId
+              properties:
+                documentId:
+                  $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Report structure validation result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          isValid:
+                            type: boolean
+                          sections:
+                            type: array
+                            items:
+                              type: object
+
+  /v1/tools/presentation:generate:
+    post:
+      summary: Generate presentation from document
+      tags:
+        - Document Tools
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - documentId
+              properties:
+                documentId:
+                  $ref: '#/components/schemas/UUID'
+      responses:
+        '202':
+          description: Presentation generation job created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiSuccessEnvelope'
+                  - type: object
+                    properties:
+                      payload:
+                        type: object
+                        properties:
+                          jobId:
+                            $ref: '#/components/schemas/UUID'
+                          status:
+                            type: string

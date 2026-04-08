@@ -23,6 +23,9 @@ function registerAllRoutes(
   // Public routes — no auth required
   backendRuntime.identityAccessController.registerRoutes(fastifyInstance);
 
+  // Feature visibility routes
+  backendRuntime.featureVisibilityController.registerRoutes(fastifyInstance);
+
   // Health check
   fastifyInstance.get(
     "/health",
@@ -128,6 +131,9 @@ export async function createFastifyServer(
   await fastifyInstance.register(fastifyJwt, {
     secret: appConfig.JWT_ACCESS_SECRET,
   });
+
+  // Attach feature visibility service to Fastify instance for guard access
+  fastifyInstance.decorate("featureVisibilityService", backendRuntime.featureVisibilityService);
 
   // Global error handler — maps ApplicationError to structured API envelope
   fastifyInstance.setErrorHandler(

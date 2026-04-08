@@ -13,6 +13,9 @@ import { PresentationGenerationService } from "./modules/presentation-generation
 import { PostgresqlReportStructuringRepository } from "./modules/report-structuring/repository/report-structuring.postgresql.repository.ts";
 import { ReportStructuringService } from "./modules/report-structuring/service/report-structuring.service.ts";
 import { ReportStructuringController } from "./modules/report-structuring/transport/report-structuring.controller.ts";
+import { PostgresqlFeatureVisibilityRepository } from "./modules/feature-visibility/repository/feature-visibility.postgresql.repository.ts";
+import { FeatureVisibilityService } from "./modules/feature-visibility/service/feature-visibility.service.ts";
+import { FeatureVisibilityController } from "./modules/feature-visibility/transport/feature-visibility.controller.ts";
 import { createPostgresqlClient } from "./shared/database/postgresql-client.ts";
 import { InMemoryJobQueue } from "./shared/queue/job-queue.ts";
 import { PlagiarismAnalysisWorker, type PlagiarismWorkerPayload } from "./workers/plagiarism-analysis.worker.ts";
@@ -27,6 +30,8 @@ export interface BackendRuntime {
   plagiarismAnalysisController: PlagiarismAnalysisController;
   reportStructuringController: ReportStructuringController;
   presentationGenerationController: PresentationGenerationController;
+  featureVisibilityController: FeatureVisibilityController;
+  featureVisibilityService: FeatureVisibilityService;
   plagiarismQueue: InMemoryJobQueue<PlagiarismWorkerPayload>;
   presentationQueue: InMemoryJobQueue<PresentationWorkerPayload>;
 }
@@ -40,6 +45,7 @@ export function createBackendRuntime(databaseConnectionString: string): BackendR
   const plagiarismAnalysisRepository = new PostgresqlPlagiarismAnalysisRepository(databaseClient);
   const reportStructuringRepository = new PostgresqlReportStructuringRepository(databaseClient);
   const presentationGenerationRepository = new PostgresqlPresentationGenerationRepository(databaseClient);
+  const featureVisibilityRepository = new PostgresqlFeatureVisibilityRepository(databaseClient);
 
   // Services
   const identityAccessService = new IdentityAccessService(identityAccessRepository);
@@ -49,6 +55,7 @@ export function createBackendRuntime(databaseConnectionString: string): BackendR
   const presentationGenerationService = new PresentationGenerationService(
     presentationGenerationRepository,
   );
+  const featureVisibilityService = new FeatureVisibilityService(featureVisibilityRepository);
 
   // Workers + Queues
   const plagiarismWorker = new PlagiarismAnalysisWorker(plagiarismAnalysisService);
@@ -72,6 +79,8 @@ export function createBackendRuntime(databaseConnectionString: string): BackendR
     presentationGenerationController: new PresentationGenerationController(
       presentationGenerationService,
     ),
+    featureVisibilityController: new FeatureVisibilityController(featureVisibilityService),
+    featureVisibilityService,
     plagiarismQueue,
     presentationQueue,
   };

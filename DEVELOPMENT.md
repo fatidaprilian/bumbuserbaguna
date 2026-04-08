@@ -12,6 +12,12 @@
 - Project should live in WSL filesystem for hot-reload, DB operations, file operations
 - **If you move to E: in WSL**, both Docker and Node will perform at native speed
 
+### Recommended Path Strategy (WSL on E Drive)
+- If WSL virtual disk is already on drive E, keep project inside Linux path, for example `/home/<user>/projects/bumbuserbaguna`
+- Avoid developing from Windows paths such as `E:\Project\...` through `/mnt/e/...` for daily development
+- Docker Desktop + WSL2 performs best when source code, node_modules, and bind mounts are all inside WSL filesystem
+- Keep Git operations inside WSL terminal to avoid permission and line-ending drift
+
 ### Setup Steps
 
 #### 1. Move Project to WSL (Recommended)
@@ -78,6 +84,11 @@ curl -X POST http://localhost:3000/api/auth/register \
 - Network isolation: `bumbu_network`
 - **Redis requires authentication**
 - Deploy: `docker compose up -d` (after setting `.env`)
+
+### Environment Separation Policy
+- Day-to-day developer workflow must use only `docker-compose.dev.yml`
+- Production deployment must use separate hardening and secret management (CI/CD, secret store, and production env file)
+- Do not reuse development credentials or volumes for production
 
 ## Common Commands
 

@@ -52,10 +52,25 @@ docker-volumes/
 *.sqlite3
 db-backup/
 postgres-backup/
+postgres-data/
+redis-data/
+node_modules/.cache/
+.docker-cache/
+docker-build-cache/
+docker-compose.override.yml
+docker-compose.local.yml
+*.docker.tgz
+*.docker.tar
+
+# WSL / local host specific
+.wslconfig
+*.wsl
 
 # Development environment specific
 .env.local
 .env.development
+.env.production.local
+.env.test.local
 
 # IDE & debugging
 .vscode/settings.local.json
