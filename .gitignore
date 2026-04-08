@@ -42,3 +42,23 @@ mcp.json
 .cursor/
 .claude/
 .openai/
+
+# Docker & development-specific
+.docker/
+docker-volumes/
+.agentic-backup/
+*.db
+*.sqlite
+*.sqlite3
+db-backup/
+postgres-backup/
+
+# Development environment specific
+.env.local
+.env.development
+
+# IDE & debugging
+.vscode/settings.local.json
+.run/
+.venv/
+venv/

@@ -3,6 +3,14 @@
 #   Start : docker compose -f docker-compose.dev.yml up -d
 #   Stop  : docker compose -f docker-compose.dev.yml down
 #   Reset : docker compose -f docker-compose.dev.yml down -v
+#
+# Note: This is for LOCAL DEVELOPMENT ONLY
+#       - Default credentials: bumbu/localdev
+#       - Volumes are mounted for hot-reload support
+#       - No authentication required for PostgreSQL/Redis
+#       For production, use docker-compose.yml with environment variables
+
+version: '3.8'
 
 services:
   postgres:
@@ -23,6 +31,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bumbu_dev_network
 
   redis:
     image: redis:7-alpine
@@ -30,11 +40,20 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bumbu_dev_network
 
 volumes:
   postgres_data:
+  redis_data:
+
+networks:
+  bumbu_dev_network:
+    driver: bridge
